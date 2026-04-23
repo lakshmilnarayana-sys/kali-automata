@@ -77,6 +77,7 @@ class Experiment(BaseModel):
     title: str
     description: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
+    blast_radius: int = Field(default=50, ge=0, le=100, description="% of target affected. 100% is blocked.")
     steady_state_hypothesis: SteadyStateHypothesis
     method: List[Action]
     rollbacks: List[RollbackAction] = Field(default_factory=list)
@@ -101,10 +102,17 @@ class ActionResult(BaseModel):
     ended_at: datetime
 
 
+class ResiliencyScore(BaseModel):
+    score: int = Field(ge=0, le=100)
+    grade: str
+    breakdown: Dict[str, int]
+
+
 class ExperimentResult(BaseModel):
     experiment_title: str
     status: ExperimentStatus
     dry_run: bool = False
+    blast_radius: int = 50
     started_at: datetime = Field(default_factory=datetime.utcnow)
     ended_at: Optional[datetime] = None
     steady_state_before: List[ProbeResult] = Field(default_factory=list)
@@ -112,6 +120,7 @@ class ExperimentResult(BaseModel):
     actions: List[ActionResult] = Field(default_factory=list)
     rollbacks_executed: List[ActionResult] = Field(default_factory=list)
     abort_reason: Optional[str] = None
+    resiliency_score: Optional[ResiliencyScore] = None
 
     @property
     def duration_seconds(self) -> Optional[float]:

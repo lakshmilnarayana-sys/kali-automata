@@ -76,9 +76,24 @@ def run(
         )
     )
 
-    # Probe table
+    # Probe tables
     _render_probe_table("Steady State — Before", result.steady_state_before)
     _render_probe_table("Steady State — After", result.steady_state_after)
+
+    # Resiliency score
+    if result.resiliency_score:
+        s = result.resiliency_score
+        grade_colour = {"A": "green", "B": "cyan", "C": "yellow", "D": "orange1", "F": "red"}.get(s.grade, "white")
+        bar = "█" * (s.score // 10) + "░" * (10 - s.score // 10)
+        console.print(
+            Panel.fit(
+                f"[{grade_colour}]Grade {s.grade}  {s.score}/100[/{grade_colour}]\n"
+                f"[{grade_colour}]{bar}[/{grade_colour}]\n"
+                + "\n".join(f"  [dim]{k}[/dim]: {'+' if v >= 0 else ''}{v}" for k, v in s.breakdown.items()),
+                title="Resiliency Score",
+                border_style=grade_colour,
+            )
+        )
 
     if output:
         output.write_text(result.model_dump_json(indent=2))

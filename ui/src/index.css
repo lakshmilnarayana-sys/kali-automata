@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Blockly workspace overrides */
+.blocklyMainBackground { fill: #0a0c10 !important; }
+.blocklyToolboxDiv {
+  background: #0f1117 !important;
+  border-right: 1px solid #1f2937 !important;
+  width: 180px !important;
+}
+.blocklyTreeRoot { padding: 4px 0 !important; }
+.blocklyTreeLabel { color: #d1d5db !important; font-size: 12px !important; }
+.blocklyTreeRowSelected > .blocklyTreeLabel { color: #fff !important; }
+.blocklyFlyout { background: #131720 !important; }
+.blocklyFlyoutBackground { fill: #131720 !important; fill-opacity: 1 !important; }
+.blocklyScrollbarKnob { fill: #374151 !important; }
+.blocklyScrollbarBackground { fill: #1f2937 !important; }
+.blocklyZoom > image, .blocklyZoom > svg > image { filter: invert(0.6); }
+.blocklyTrash > image, .blocklyTrash > svg > image { filter: invert(0.5); }
+
+/* YAML syntax highlighting */
+.yaml-key     { color: #60a5fa; }
+.yaml-str     { color: #34d399; }
+.yaml-num     { color: #fb923c; }
+.yaml-bool    { color: #c084fc; }
+.yaml-comment { color: #4b5563; font-style: italic; }
+.yaml-dash    { color: #facc15; }
+
+/* Blast radius bar animation */
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.blast-danger { animation: pulse-danger 1.2s ease-in-out infinite; }

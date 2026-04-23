@@ -35,6 +35,10 @@ htmlcov/
 # Experiment results
 results/*.json
 
+# UI
+ui/node_modules/
+ui/dist/
+
 # Secrets
 .env
 .env.*

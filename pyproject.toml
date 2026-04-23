@@ -32,7 +32,8 @@ dev = [
 ]
 
 [project.scripts]
-kali = "kali.cli.app:app"
+kali     = "kali.cli.app:app"
+kali-mcp = "kali.mcp.server:_stdio_loop"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/kali"]
