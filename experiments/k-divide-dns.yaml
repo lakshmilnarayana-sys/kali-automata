@@ -1,0 +1,49 @@
+version: "1.0.0"
+title: "Service handles DNS resolution failures gracefully"
+description: >
+  K-Divide poisons DNS for specific external dependencies by redirecting
+  them to a blackhole IP in /etc/hosts. Confirms the service returns
+  a structured error rather than hanging indefinitely.
+tags:
+  - k-divide
+  - dns
+  - resilience
+
+steady_state_hypothesis:
+  title: "Service is healthy"
+  probes:
+    - name: service-health
+      type: http
+      provider:
+        url: "http://localhost:8080/health"
+        method: GET
+        expected_status: 200
+        timeout: 3.0
+
+method:
+  - name: poison-dns-for-external-deps
+    type: network/dns-fault
+    duration: 45
+    provider:
+      mode: poison                   # poison | block
+      domains:
+        - "payments.example.com"
+        - "auth.example.com"
+      blackhole_ip: "192.0.2.1"     # RFC5737 TEST-NET — guaranteed unreachable
+    pauses:
+      before: 5
+      after: 10
+
+rollbacks:
+  - name: restore-dns
+    type: network/dns-fault
+    provider:
+      mode: poison
+      domains:
+        - "payments.example.com"
+        - "auth.example.com"
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 2

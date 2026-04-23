@@ -17,13 +17,18 @@ class ProbeType(str, Enum):
 
 
 class ActionType(str, Enum):
+    # K-Vortex: network latency and disruption
     network_latency = "network/latency"
     network_loss = "network/loss"
-    network_partition = "network/partition"
+    # K-Reaper: pod and service termination
+    process_kill = "process/kill"
+    # K-Gravity: resource overload and pressure
     cpu_stress = "cpu/stress"
     memory_stress = "memory/stress"
     disk_stress = "disk/stress"
-    process_kill = "process/kill"
+    # K-Divide: network partitions and DNS faults
+    network_partition = "network/partition"
+    network_dns_fault = "network/dns-fault"
     custom = "custom"
 
 

@@ -1,4 +1,4 @@
-"""Process kill fault injector."""
+"""K-Reaper — pod and service termination faults."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from kali.experiments.base import FaultInjector
 from kali.models.experiment import ActionResult
 
 
-class ProcessKillInjector(FaultInjector):
-    """Kills a process by name or PID to test restart/recovery behaviour."""
+class KReaperProcessKillInjector(FaultInjector):
+    """K-Reaper: kills a process by name or PID to test restart/recovery behaviour."""
 
     name = "process/kill"
 
@@ -54,7 +54,7 @@ class ProcessKillInjector(FaultInjector):
         return ActionResult(
             action_name=self.name,
             success=True,
-            output=f"[dry-run] {cmd}" if dry_run else f"Sent {signal} to {target}",
+            output=f"[dry-run] {cmd}" if dry_run else f"K-Reaper: sent {signal} to {target}",
             started_at=started,
             ended_at=datetime.utcnow(),
         )
@@ -68,7 +68,7 @@ class ProcessKillInjector(FaultInjector):
         return ActionResult(
             action_name=f"{self.name}/rollback",
             success=True,
-            output=f"Ran restart: {restart_cmd}" if restart_cmd else "No restart command configured",
+            output=f"K-Reaper: ran restart '{restart_cmd}'" if restart_cmd else "K-Reaper: no restart command configured",
             started_at=started,
             ended_at=datetime.utcnow(),
         )

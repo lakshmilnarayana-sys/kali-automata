@@ -1,0 +1,48 @@
+version: "1.0.0"
+title: "Service survives network partition to downstream dependency"
+description: >
+  K-Divide partitions traffic to a downstream service for 60 seconds.
+  Verifies the upstream service degrades gracefully and recovers once
+  the partition is lifted.
+tags:
+  - k-divide
+  - network-partition
+  - resilience
+
+steady_state_hypothesis:
+  title: "Upstream API is healthy"
+  probes:
+    - name: upstream-health
+      type: http
+      provider:
+        url: "http://localhost:8080/health"
+        method: GET
+        expected_status: 200
+        timeout: 3.0
+
+method:
+  - name: partition-downstream
+    type: network/partition
+    duration: 60
+    provider:
+      targets:
+        - "10.0.0.50"       # downstream service IP
+        - "10.0.0.51"
+      direction: both       # inbound | outbound | both
+    pauses:
+      before: 5
+      after: 10
+
+rollbacks:
+  - name: remove-partition-rules
+    type: network/partition
+    provider:
+      targets:
+        - "10.0.0.50"
+        - "10.0.0.51"
+      direction: both
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 3

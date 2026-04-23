@@ -1,4 +1,4 @@
-"""Network fault injectors — latency, packet loss, partition."""
+"""K-Vortex — network latency and disruption faults."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from kali.experiments.base import FaultInjector
 from kali.models.experiment import ActionResult
 
 
-class NetworkLatencyInjector(FaultInjector):
-    """Adds artificial latency via `tc netem`."""
+class KVortexLatencyInjector(FaultInjector):
+    """K-Vortex: injects artificial latency via `tc netem`."""
 
     name = "network/latency"
 
@@ -40,7 +40,7 @@ class NetworkLatencyInjector(FaultInjector):
         return ActionResult(
             action_name=self.name,
             success=True,
-            output=f"[dry-run] {cmd}" if dry_run else f"Applied {delay_ms}ms±{jitter_ms}ms on {iface}",
+            output=f"[dry-run] {cmd}" if dry_run else f"K-Vortex: {delay_ms}ms±{jitter_ms}ms on {iface}",
             started_at=started,
             ended_at=datetime.utcnow(),
         )
@@ -55,14 +55,14 @@ class NetworkLatencyInjector(FaultInjector):
         return ActionResult(
             action_name=f"{self.name}/rollback",
             success=True,
-            output=f"[dry-run] {cmd}" if dry_run else f"Removed netem on {iface}",
+            output=f"[dry-run] {cmd}" if dry_run else f"K-Vortex cleared on {iface}",
             started_at=started,
             ended_at=datetime.utcnow(),
         )
 
 
-class NetworkPacketLossInjector(FaultInjector):
-    """Drops a percentage of packets via `tc netem`."""
+class KVortexPacketLossInjector(FaultInjector):
+    """K-Vortex: drops a percentage of packets via `tc netem`."""
 
     name = "network/loss"
 
@@ -78,7 +78,7 @@ class NetworkPacketLossInjector(FaultInjector):
         return ActionResult(
             action_name=self.name,
             success=True,
-            output=f"[dry-run] {cmd}" if dry_run else f"Applied {loss_pct}% packet loss on {iface}",
+            output=f"[dry-run] {cmd}" if dry_run else f"K-Vortex: {loss_pct}% packet loss on {iface}",
             started_at=started,
             ended_at=datetime.utcnow(),
         )
@@ -93,7 +93,7 @@ class NetworkPacketLossInjector(FaultInjector):
         return ActionResult(
             action_name=f"{self.name}/rollback",
             success=True,
-            output=f"Removed packet loss on {iface}",
+            output=f"K-Vortex packet loss cleared on {iface}",
             started_at=started,
             ended_at=datetime.utcnow(),
         )

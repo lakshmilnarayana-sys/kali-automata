@@ -1,20 +1,21 @@
-# Kali
+# KALI — Kinetic Automated Load and Infrastructure
 
-**Chaos engineering toolkit** — fault injection, steady-state verification, and observability integrations.
+> **Controlled Instability. Indestructible Infrastructure.**
 
-Named after the Hindu goddess of destruction and transformation.
+Chaos engineering toolkit — fault injection, steady-state verification, and observability integrations.
+
+Named after Kali, the Hindu goddess of destruction and transformation. Destroy deliberately. Build indestructibly.
 
 ---
 
-## Concepts
+## Chaos Modules
 
-Kali follows the [Principles of Chaos Engineering](https://principlesofchaos.org/):
-
-1. **Steady-State Hypothesis** — define what "healthy" looks like via probes (HTTP, metric, process)
-2. **Method** — inject faults (network latency/loss, CPU stress, process kill)
-3. **Circuit Breaker** — auto-abort if health degrades beyond threshold mid-experiment
-4. **Rollback** — always clean up, regardless of outcome
-5. **Verify** — confirm the system recovered to steady state
+| Module | Domain | Fault Types |
+|--------|--------|-------------|
+| **K-Vortex** | Network Latency & Disruption | `network/latency`, `network/loss` |
+| **K-Reaper** | Pod & Service Termination | `process/kill` |
+| **K-Gravity** | Resource Overload & Pressure | `cpu/stress`, `memory/stress` |
+| **K-Divide** | Network Partitions & DNS Faults | `network/partition`, `network/dns-fault` |
 
 ---
 
@@ -34,13 +35,13 @@ pip install -e ".[dev]"
 # Validate an experiment definition
 kali validate experiments/network-latency.yaml
 
-# Dry run (no faults injected)
-kali run experiments/network-latency.yaml --dry-run
+# Dry run — plan without executing any faults
+kali run experiments/k-divide-dns.yaml --dry-run
 
 # Run live
 kali run experiments/cpu-stress.yaml
 
-# Save result to file and view report later
+# Save result and view report later
 kali run experiments/network-latency.yaml --output results/run-001.json
 kali report results/run-001.json
 ```
@@ -52,8 +53,7 @@ kali report results/run-001.json
 ```yaml
 version: "1.0.0"
 title: "API survives 500ms network latency"
-description: "Optional human-readable description"
-tags: [network, api]
+tags: [k-vortex, network, api]
 
 steady_state_hypothesis:
   title: "API is healthy"
@@ -67,8 +67,8 @@ steady_state_hypothesis:
 
 method:
   - name: inject-latency
-    type: network/latency
-    duration: 60          # seconds
+    type: network/latency        # K-Vortex
+    duration: 60
     provider:
       interface: eth0
       delay_ms: 500
@@ -88,14 +88,38 @@ circuit_breaker:
 
 ---
 
-## Fault Types
+## K-Vortex — Network Latency & Disruption
 
-| Type | Description | Required `provider` keys |
-|------|-------------|--------------------------|
-| `network/latency` | Add delay via `tc netem` | `interface`, `delay_ms`, `jitter_ms` |
-| `network/loss` | Drop packets via `tc netem` | `interface`, `loss_percent` |
-| `cpu/stress` | Burn CPU cores via `stress-ng` | `workers`, `load_percent` |
-| `process/kill` | Send signal to process | `process` OR `pid`, `signal` |
+| Type | Provider keys | Description |
+|------|--------------|-------------|
+| `network/latency` | `interface`, `delay_ms`, `jitter_ms` | Add latency via `tc netem` |
+| `network/loss` | `interface`, `loss_percent` | Drop packets via `tc netem` |
+
+---
+
+## K-Reaper — Pod & Service Termination
+
+| Type | Provider keys | Description |
+|------|--------------|-------------|
+| `process/kill` | `process` or `pid`, `signal`, `restart_cmd` | Send signal to process |
+
+---
+
+## K-Gravity — Resource Overload & Pressure
+
+| Type | Provider keys | Description |
+|------|--------------|-------------|
+| `cpu/stress` | `workers`, `load_percent` | Burn CPU cores via `stress-ng` |
+| `memory/stress` | `workers`, `memory_mb` | Allocate RAM via `stress-ng --vm` |
+
+---
+
+## K-Divide — Network Partitions & DNS Faults
+
+| Type | Provider keys | Description |
+|------|--------------|-------------|
+| `network/partition` | `targets` (list of IPs/CIDRs), `direction` (inbound/outbound/both) | Block traffic via `iptables` |
+| `network/dns-fault` | `mode` (poison/block), `domains`, `blackhole_ip` | Poison `/etc/hosts` or block port 53 |
 
 ---
 
@@ -113,9 +137,22 @@ circuit_breaker:
 
 | Integration | What it does |
 |-------------|-------------|
-| `prometheus` | Pushes experiment events/duration to Pushgateway |
+| `prometheus` | Pushes experiment events and duration to Pushgateway |
 | `datadog` | Fires Datadog events on start/end |
 | `pagerduty` | Triggers PagerDuty alert on abort/failure |
+
+---
+
+## Experiment Lifecycle
+
+```
+validate config
+  → check steady state (before)
+    → inject faults (method)          ← circuit breaker monitors in background
+      → execute rollbacks             ← always, regardless of outcome
+        → verify steady state (after)
+          → report
+```
 
 ---
 
@@ -134,11 +171,23 @@ mypy src/
 
 ```
 src/kali/
-├── cli/          # Typer CLI — run, validate, report
-├── engine/       # Experiment runner & lifecycle orchestration
-├── experiments/  # Fault injectors (network, cpu, process, …)
-├── hypothesis/   # Steady-state probes
-├── integrations/ # Observability integrations
-├── safety/       # Circuit breaker
-└── models/       # Pydantic schemas
+├── cli/            # Typer CLI — run, validate, report
+├── engine/         # ExperimentRunner — lifecycle orchestration
+├── experiments/
+│   ├── k_vortex.py     # K-Vortex: network latency + packet loss
+│   ├── k_reaper.py     # K-Reaper: process/pod termination
+│   ├── k_gravity.py    # K-Gravity: CPU + memory pressure
+│   └── k_divide.py     # K-Divide: network partition + DNS faults
+├── hypothesis/     # Steady-state probes (http, metric, process)
+├── integrations/   # Prometheus, Datadog, PagerDuty
+├── safety/         # Circuit breaker
+└── models/         # Pydantic schemas
 ```
+
+---
+
+## Adding a new fault injector
+
+1. Create `src/kali/experiments/k_<module>.py` implementing `FaultInjector`
+2. Register it in `INJECTOR_REGISTRY` in `src/kali/experiments/__init__.py`
+3. Add the new `ActionType` value in `models/experiment.py`
