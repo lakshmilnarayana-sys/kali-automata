@@ -1,0 +1,39 @@
+version: "1.0.0"
+title: "Service stays healthy under 80% CPU pressure"
+description: >
+  Stress 2 CPU cores to 80% for 30 seconds and confirm the
+  service health endpoint continues to respond within 2 seconds.
+tags:
+  - cpu
+  - stress
+  - performance
+
+steady_state_hypothesis:
+  title: "Service responds within SLA"
+  probes:
+    - name: service-health
+      type: http
+      provider:
+        url: "http://localhost:8080/health"
+        method: GET
+        expected_status: 200
+        timeout: 2.0
+    - name: worker-process-running
+      type: process
+      provider:
+        process: "myapp-worker"
+
+method:
+  - name: cpu-stress-80pct
+    type: cpu/stress
+    duration: 30
+    provider:
+      workers: 2
+      load_percent: 80
+
+rollbacks: []
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 2

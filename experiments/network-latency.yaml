@@ -1,0 +1,43 @@
+version: "1.0.0"
+title: "API survives 500ms network latency"
+description: >
+  Verify that the API gateway remains healthy and returns 200
+  even when 500ms of latency is injected on the primary interface.
+tags:
+  - network
+  - latency
+  - api
+
+steady_state_hypothesis:
+  title: "API is healthy"
+  probes:
+    - name: api-health-check
+      type: http
+      provider:
+        url: "http://localhost:8080/health"
+        method: GET
+        expected_status: 200
+        timeout: 3.0
+
+method:
+  - name: inject-network-latency
+    type: network/latency
+    duration: 60
+    provider:
+      interface: lo0
+      delay_ms: 500
+      jitter_ms: 100
+    pauses:
+      before: 5
+      after: 5
+
+rollbacks:
+  - name: remove-network-latency
+    type: network/latency
+    provider:
+      interface: lo0
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 3
