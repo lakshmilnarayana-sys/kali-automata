@@ -118,7 +118,7 @@ def _validate_experiment(path: str | None = None, yaml_content: str | None = Non
         elif path:
             raw = yaml.safe_load(Path(path).read_text())
         else:
-            return {"error": "Provide either 'path' or 'yaml_content'"}
+            return {"valid": False, "error": "Provide either 'path' or 'yaml_content'"}
         exp = Experiment.model_validate(raw)
         return {
             "valid": True,

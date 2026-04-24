@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 from typing import Any, Dict, Optional
 
 import httpx
@@ -15,19 +14,17 @@ async def run_probe(probe: Probe, dry_run: bool = False) -> ProbeResult:
     if dry_run:
         return ProbeResult(probe_name=probe.name, passed=True, value="[dry-run]")
 
-    match probe.type:
-        case ProbeType.http:
-            return await _http_probe(probe)
-        case ProbeType.metric:
-            return await _metric_probe(probe)
-        case ProbeType.process:
-            return await _process_probe(probe)
-        case _:
-            return ProbeResult(
-                probe_name=probe.name,
-                passed=False,
-                error=f"Unsupported probe type: {probe.type}",
-            )
+    if probe.type == ProbeType.http:
+        return await _http_probe(probe)
+    if probe.type == ProbeType.metric:
+        return await _metric_probe(probe)
+    if probe.type == ProbeType.process:
+        return await _process_probe(probe)
+    return ProbeResult(
+        probe_name=probe.name,
+        passed=False,
+        error=f"Unsupported probe type: {probe.type}",
+    )
 
 
 async def _http_probe(probe: Probe) -> ProbeResult:
@@ -42,7 +39,8 @@ async def _http_probe(probe: Probe) -> ProbeResult:
             resp = await client.request(method, url)
             passed = resp.status_code == expected_status
             if probe.tolerance and not passed:
-                passed = resp.status_code in (probe.tolerance if isinstance(probe.tolerance, list) else [probe.tolerance])
+                tolerance = probe.tolerance if isinstance(probe.tolerance, list) else [probe.tolerance]
+                passed = resp.status_code in tolerance
             return ProbeResult(
                 probe_name=probe.name,
                 passed=passed,
@@ -102,11 +100,12 @@ async def _process_probe(probe: Probe) -> ProbeResult:
 
 
 def _compare(value: float, operator: str, threshold: float) -> bool:
-    match operator:
-        case ">=": return value >= threshold
-        case "<=": return value <= threshold
-        case ">":  return value > threshold
-        case "<":  return value < threshold
-        case "==": return value == threshold
-        case "!=": return value != threshold
-        case _:    return False
+    ops = {
+        ">=": value >= threshold,
+        "<=": value <= threshold,
+        ">":  value > threshold,
+        "<":  value < threshold,
+        "==": value == threshold,
+        "!=": value != threshold,
+    }
+    return ops.get(operator, False)

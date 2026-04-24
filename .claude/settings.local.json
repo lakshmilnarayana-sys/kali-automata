@@ -8,7 +8,17 @@
       "Bash(gh repo *)",
       "Bash(git mv *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(python3 -c \"import pytest; print\\(pytest.__version__\\)\")",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)",
+      "Bash(python3 -m pip install pytest pytest-asyncio pydantic httpx pyyaml anyio)",
+      "Bash(PYTHONPATH=src python3 -m pytest tests/ -x -q)",
+      "Bash(PYTHONPATH=src python3 *)"
     ]
   }
 }
