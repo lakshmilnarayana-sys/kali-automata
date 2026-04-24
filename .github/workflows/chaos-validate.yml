@@ -1,0 +1,60 @@
+name: Chaos Validation
+
+on:
+  pull_request:
+    paths:
+      - "experiments/**"
+      - "src/**"
+      - "pyproject.toml"
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate & dry-run all experiments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Kali
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src/
+
+      - name: Type-check
+        run: mypy src/ --ignore-missing-imports
+
+      - name: Unit tests
+        run: pytest tests/unit/ -q
+
+      - name: Validate all experiment definitions
+        run: |
+          EXIT=0
+          for f in experiments/*.yaml; do
+            echo "── validating $f"
+            kali validate "$f" || EXIT=1
+          done
+          exit $EXIT
+
+      - name: Dry-run all experiments
+        run: |
+          EXIT=0
+          for f in experiments/*.yaml; do
+            echo "── dry-running $f"
+            kali run "$f" --dry-run || EXIT=1
+          done
+          exit $EXIT
+
+      - name: Upload dry-run results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-results
+          path: results/
+          if-no-files-found: ignore

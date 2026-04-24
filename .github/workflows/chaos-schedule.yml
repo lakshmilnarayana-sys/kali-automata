@@ -1,0 +1,97 @@
+name: Scheduled Chaos Run
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"       # every Monday at 02:00 UTC (GameDay cadence)
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: "Specific experiment file to run (leave blank for all)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run only (no real faults)"
+        type: boolean
+        default: true
+
+jobs:
+  chaos:
+    name: Run chaos experiments
+    runs-on: ubuntu-latest
+    environment: chaos          # requires manual approval gate in GitHub Environments
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Kali
+        run: pip install -e .
+
+      - name: Set dry-run flag
+        id: flags
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "flag=--dry-run" >> "$GITHUB_OUTPUT"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run experiment(s)
+        run: |
+          mkdir -p results
+          EXPERIMENT="${{ github.event.inputs.experiment }}"
+          FLAG="${{ steps.flags.outputs.flag }}"
+
+          if [ -n "$EXPERIMENT" ]; then
+            kali run "$EXPERIMENT" $FLAG --output "results/$(basename $EXPERIMENT .yaml).json"
+          else
+            EXIT=0
+            for f in experiments/*.yaml; do
+              NAME=$(basename "$f" .yaml)
+              echo "── running $f $FLAG"
+              kali run "$f" $FLAG --output "results/$NAME.json" || EXIT=1
+            done
+            exit $EXIT
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-results-${{ github.run_id }}
+          path: results/
+
+      - name: Report resiliency scores
+        if: always()
+        run: |
+          echo "## Resiliency Scores" >> $GITHUB_STEP_SUMMARY
+          echo "| Experiment | Score | Grade | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          for f in results/*.json; do
+            [ -f "$f" ] || continue
+            TITLE=$(python3 -c "import json,sys; d=json.load(open('$f')); print(d.get('experiment_title','?'))")
+            STATUS=$(python3 -c "import json,sys; d=json.load(open('$f')); print(d.get('status','?'))")
+            SCORE=$(python3 -c "import json,sys; d=json.load(open('$f')); s=d.get('resiliency_score'); print(s['score'] if s else '—')")
+            GRADE=$(python3 -c "import json,sys; d=json.load(open('$f')); s=d.get('resiliency_score'); print(s['grade'] if s else '—')")
+            echo "| $TITLE | $SCORE | $GRADE | $STATUS |" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Open issue on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔴 Scheduled chaos run failed — ${new Date().toISOString().split('T')[0]}`,
+              body: `Chaos experiment run failed on schedule.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['chaos', 'incident']
+            });

@@ -1,0 +1,44 @@
+version: "1.0.0"
+title: "Service recovers after pod deletion"
+description: >
+  K-Kube deletes all pods matching a label selector. The deployment
+  controller should reschedule them within the SLA. Verifies that
+  the service stays healthy (or recovers quickly) through a rolling restart.
+tags:
+  - k-kube
+  - kubernetes
+  - pod-delete
+
+steady_state_hypothesis:
+  title: "Service is healthy"
+  probes:
+    - name: api-health
+      type: http
+      provider:
+        url: "http://my-service.default.svc.cluster.local/health"
+        expected_status: 200
+        timeout: 3.0
+
+method:
+  - name: delete-api-pods
+    type: kubernetes/pod-delete
+    duration: 30
+    provider:
+      namespace: default
+      label_selector: "app=my-api"
+      grace_period_seconds: 0
+    pauses:
+      before: 5
+      after: 15
+
+rollbacks:
+  - name: pod-delete-rollback
+    type: kubernetes/pod-delete
+    provider:
+      namespace: default
+      label_selector: "app=my-api"
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 3

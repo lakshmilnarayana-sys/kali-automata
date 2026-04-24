@@ -29,6 +29,12 @@ class ActionType(str, Enum):
     # K-Divide: network partitions and DNS faults
     network_partition = "network/partition"
     network_dns_fault = "network/dns-fault"
+    # K-Kube: Kubernetes fault injection
+    kubernetes_pod_delete = "kubernetes/pod-delete"
+    kubernetes_node_drain = "kubernetes/node-drain"
+    kubernetes_scale_down = "kubernetes/scale-down"
+    kubernetes_network_policy = "kubernetes/network-policy"
+    kubernetes_resource_limit = "kubernetes/resource-limit"
     custom = "custom"
 
 

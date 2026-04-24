@@ -37,10 +37,11 @@ export default function App() {
           {/* Module legend overlay */}
           <div className="absolute bottom-3 right-3 flex flex-col gap-1 pointer-events-none">
             {[
-              { colour: 'bg-blue-500',   label: 'K-Vortex · Network'  },
-              { colour: 'bg-red-500',    label: 'K-Reaper · Process'  },
-              { colour: 'bg-purple-500', label: 'K-Gravity · Resources'},
-              { colour: 'bg-teal-400',   label: 'K-Divide · Partition' },
+              { colour: 'bg-blue-500',   label: 'K-Vortex · Network'    },
+              { colour: 'bg-red-500',    label: 'K-Reaper · Process'    },
+              { colour: 'bg-purple-500', label: 'K-Gravity · Resources' },
+              { colour: 'bg-teal-400',   label: 'K-Divide · Partition'  },
+              { colour: 'bg-cyan-400',   label: 'K-Kube · Kubernetes'   },
             ].map(({ colour, label }) => (
               <div key={label} className="flex items-center gap-1.5 bg-[#0a0c10]/70 rounded px-2 py-0.5">
                 <span className={`w-2 h-2 rounded-full ${colour}`} />

@@ -10,6 +10,7 @@ const HUE = {
   reaper:          0,   // red    — K-Reaper
   gravity:       270,   // purple — K-Gravity
   divide:        175,   // teal   — K-Divide
+  kube:          195,   // cyan   — K-Kube
 };
 
 export function registerBlocks(): void {
@@ -354,6 +355,159 @@ export function registerBlocks(): void {
       this.setTooltip('Poisons DNS resolution or blocks port 53. Rollback restores /etc/hosts immediately.');
     },
   };
+
+  // ═══════════════════════════ K-KUBE  ·  Kubernetes ═══════════════════════
+
+  Blockly.Blocks['fault_kube_pod_delete'] = {
+    init(this: Blockly.Block) {
+      this.setColour(HUE.kube);
+      this.appendDummyInput()
+        .appendField('☸️  K-KUBE · Pod Delete');
+      this.appendDummyInput()
+        .appendField('   Name')
+        .appendField(new Blockly.FieldTextInput('delete-pods'), 'NAME');
+      this.appendDummyInput()
+        .appendField('   Namespace')
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
+      this.appendDummyInput()
+        .appendField('   Label selector  (e.g. app=my-api)')
+        .appendField(new Blockly.FieldTextInput('app=my-api'), 'LABEL_SELECTOR');
+      this.appendDummyInput()
+        .appendField('   Grace period')
+        .appendField(new Blockly.FieldNumber(0, 0), 'GRACE_PERIOD')
+        .appendField('seconds');
+      this.appendDummyInput()
+        .appendField('   Duration')
+        .appendField(new Blockly.FieldNumber(30, 1), 'DURATION')
+        .appendField('seconds');
+      this.setPreviousStatement(true, 'Fault');
+      this.setNextStatement(true, 'Fault');
+      this.setTooltip('Deletes pods by label selector. The deployment controller recreates them automatically.');
+    },
+  };
+
+  Blockly.Blocks['fault_kube_scale_down'] = {
+    init(this: Blockly.Block) {
+      this.setColour(HUE.kube);
+      this.appendDummyInput()
+        .appendField('☸️  K-KUBE · Scale to Zero');
+      this.appendDummyInput()
+        .appendField('   Name')
+        .appendField(new Blockly.FieldTextInput('scale-down'), 'NAME');
+      this.appendDummyInput()
+        .appendField('   Namespace')
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
+      this.appendDummyInput()
+        .appendField('   Deployment')
+        .appendField(new Blockly.FieldTextInput('my-service'), 'DEPLOYMENT');
+      this.appendDummyInput()
+        .appendField('   Restore to replicas (rollback)')
+        .appendField(new Blockly.FieldNumber(3, 1, 100, 1), 'REPLICAS');
+      this.appendDummyInput()
+        .appendField('   Duration')
+        .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
+        .appendField('seconds');
+      this.appendDummyInput()
+        .appendField('   Auto-rollback')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
+      this.setPreviousStatement(true, 'Fault');
+      this.setNextStatement(true, 'Fault');
+      this.setTooltip('Scales a deployment to 0 replicas. Rollback restores to the specified replica count.');
+    },
+  };
+
+  Blockly.Blocks['fault_kube_node_drain'] = {
+    init(this: Blockly.Block) {
+      this.setColour(HUE.kube);
+      this.appendDummyInput()
+        .appendField('☸️  K-KUBE · Node Drain');
+      this.appendDummyInput()
+        .appendField('   Name')
+        .appendField(new Blockly.FieldTextInput('drain-node'), 'NAME');
+      this.appendDummyInput()
+        .appendField('   Node name')
+        .appendField(new Blockly.FieldTextInput('worker-node-1'), 'NODE');
+      this.appendDummyInput()
+        .appendField('   Ignore DaemonSets')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'IGNORE_DS')
+        .appendField('   Delete emptyDir data')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'DELETE_DATA');
+      this.appendDummyInput()
+        .appendField('   Duration')
+        .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
+        .appendField('seconds');
+      this.appendDummyInput()
+        .appendField('   Auto-rollback (uncordon)')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
+      this.setPreviousStatement(true, 'Fault');
+      this.setNextStatement(true, 'Fault');
+      this.setTooltip('Drains a Kubernetes node. Rollback runs kubectl uncordon immediately.');
+    },
+  };
+
+  Blockly.Blocks['fault_kube_network_policy'] = {
+    init(this: Blockly.Block) {
+      this.setColour(HUE.kube);
+      this.appendDummyInput()
+        .appendField('☸️  K-KUBE · Network Policy');
+      this.appendDummyInput()
+        .appendField('   Name')
+        .appendField(new Blockly.FieldTextInput('isolate-pods'), 'NAME');
+      this.appendDummyInput()
+        .appendField('   Namespace')
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
+      this.appendDummyInput()
+        .appendField('   Policy name')
+        .appendField(new Blockly.FieldTextInput('kali-deny-policy'), 'POLICY_NAME');
+      this.appendDummyInput()
+        .appendField('   Deny ingress')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'DENY_INGRESS')
+        .appendField('   Deny egress')
+        .appendField(new Blockly.FieldCheckbox('FALSE'), 'DENY_EGRESS');
+      this.appendDummyInput()
+        .appendField('   Duration')
+        .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
+        .appendField('seconds');
+      this.appendDummyInput()
+        .appendField('   Auto-rollback (delete policy)')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
+      this.setPreviousStatement(true, 'Fault');
+      this.setNextStatement(true, 'Fault');
+      this.setTooltip('Applies a deny NetworkPolicy. Rollback deletes the policy immediately.');
+    },
+  };
+
+  Blockly.Blocks['fault_kube_resource_limit'] = {
+    init(this: Blockly.Block) {
+      this.setColour(HUE.kube);
+      this.appendDummyInput()
+        .appendField('☸️  K-KUBE · Resource Limits');
+      this.appendDummyInput()
+        .appendField('   Name')
+        .appendField(new Blockly.FieldTextInput('throttle-resources'), 'NAME');
+      this.appendDummyInput()
+        .appendField('   Namespace')
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
+      this.appendDummyInput()
+        .appendField('   Deployment')
+        .appendField(new Blockly.FieldTextInput('my-service'), 'DEPLOYMENT');
+      this.appendDummyInput()
+        .appendField('   CPU limit')
+        .appendField(new Blockly.FieldTextInput('100m'), 'CPU_LIMIT')
+        .appendField('   Memory limit')
+        .appendField(new Blockly.FieldTextInput('128Mi'), 'MEMORY_LIMIT');
+      this.appendDummyInput()
+        .appendField('   Duration')
+        .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
+        .appendField('seconds');
+      this.appendDummyInput()
+        .appendField('   Auto-rollback (remove limits)')
+        .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
+      this.setPreviousStatement(true, 'Fault');
+      this.setNextStatement(true, 'Fault');
+      this.setTooltip('Patches a deployment with restrictive CPU/memory limits. Rollback removes them immediately.');
+    },
+  };
 }
 
 // ─── Toolbox configuration ────────────────────────────────────────────────────
@@ -414,6 +568,18 @@ export const toolboxConfig = {
       contents: [
         { kind: 'block', type: 'fault_network_partition' },
         { kind: 'block', type: 'fault_dns_fault' },
+      ],
+    },
+    {
+      kind: 'category',
+      name: '☸️  K-Kube · Kubernetes',
+      colour: `${HUE.kube}`,
+      contents: [
+        { kind: 'block', type: 'fault_kube_pod_delete' },
+        { kind: 'block', type: 'fault_kube_scale_down' },
+        { kind: 'block', type: 'fault_kube_node_drain' },
+        { kind: 'block', type: 'fault_kube_network_policy' },
+        { kind: 'block', type: 'fault_kube_resource_limit' },
       ],
     },
   ],

@@ -1,0 +1,45 @@
+version: "1.0.0"
+title: "Upstream handles downstream scale-to-zero"
+description: >
+  K-Kube scales the downstream deployment to 0 replicas for 60 seconds.
+  Verifies the upstream service returns a structured error or uses its
+  cache/fallback rather than hanging or returning 500.
+tags:
+  - k-kube
+  - kubernetes
+  - scale-down
+  - resilience
+
+steady_state_hypothesis:
+  title: "Upstream API is healthy"
+  probes:
+    - name: upstream-health
+      type: http
+      provider:
+        url: "http://upstream-api.default.svc.cluster.local/health"
+        expected_status: 200
+        timeout: 3.0
+
+method:
+  - name: scale-downstream-to-zero
+    type: kubernetes/scale-down
+    duration: 60
+    provider:
+      namespace: default
+      deployment: downstream-service
+    pauses:
+      before: 5
+      after: 10
+
+rollbacks:
+  - name: restore-downstream
+    type: kubernetes/scale-down
+    provider:
+      namespace: default
+      deployment: downstream-service
+      replicas: 3
+
+circuit_breaker:
+  enabled: true
+  check_interval: 10
+  max_failures: 3

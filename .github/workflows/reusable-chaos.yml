@@ -1,0 +1,147 @@
+name: Reusable Chaos Experiment
+
+# Call this from any repo:
+#
+#   jobs:
+#     chaos:
+#       uses: lakshmilnarayana-sys/kali-automata/.github/workflows/reusable-chaos.yml@main
+#       with:
+#         experiment: experiments/my-test.yaml
+#         dry_run: true
+#       secrets:
+#         KALI_API_KEY: ${{ secrets.KALI_API_KEY }}
+
+on:
+  workflow_call:
+    inputs:
+      experiment:
+        description: "Path to experiment YAML file"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run (no real faults injected)"
+        required: false
+        type: boolean
+        default: true
+      python_version:
+        description: "Python version to use"
+        required: false
+        type: string
+        default: "3.11"
+      kali_version:
+        description: "Kali version to install (blank = latest)"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      KALI_API_KEY:
+        required: false
+    outputs:
+      resiliency_score:
+        description: "Numeric resiliency score (0-100)"
+        value: ${{ jobs.run.outputs.score }}
+      grade:
+        description: "Resiliency grade (A-F)"
+        value: ${{ jobs.run.outputs.grade }}
+      status:
+        description: "Experiment status (completed/aborted/failed)"
+        value: ${{ jobs.run.outputs.status }}
+
+jobs:
+  run:
+    name: "kali run ${{ inputs.experiment }}"
+    runs-on: ubuntu-latest
+    outputs:
+      score:  ${{ steps.parse.outputs.score }}
+      grade:  ${{ steps.parse.outputs.grade }}
+      status: ${{ steps.parse.outputs.status }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: pip
+
+      - name: Install Kali
+        run: |
+          if [ -n "${{ inputs.kali_version }}" ]; then
+            pip install "kali==${{ inputs.kali_version }}"
+          else
+            pip install -e . 2>/dev/null || pip install kali
+          fi
+
+      - name: Run experiment
+        run: |
+          mkdir -p results
+          FLAG=$( [ "${{ inputs.dry_run }}" = "true" ] && echo "--dry-run" || echo "" )
+          kali run "${{ inputs.experiment }}" $FLAG --output results/result.json
+        env:
+          KALI_API_KEY: ${{ secrets.KALI_API_KEY }}
+
+      - name: Parse result
+        id: parse
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          try:
+              with open("results/result.json") as f:
+                  d = json.load(f)
+              score = (d.get("resiliency_score") or {}).get("score", 0)
+              grade = (d.get("resiliency_score") or {}).get("grade", "F")
+              status = d.get("status", "unknown")
+          except Exception:
+              score, grade, status = 0, "F", "error"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"score={score}\ngrade={grade}\nstatus={status}\n")
+          EOF
+
+      - name: Add score to job summary
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import json
+          try:
+              with open("results/result.json") as f:
+                  d = json.load(f)
+              title  = d.get("experiment_title", "?")
+              status = d.get("status", "?")
+              s      = d.get("resiliency_score") or {}
+              score  = s.get("score", "—")
+              grade  = s.get("grade", "—")
+              dry    = "✓ dry-run" if d.get("dry_run") else "⚡ live"
+              print(f"## {title} [{dry}]\n")
+              print(f"**Status**: `{status}`  |  **Score**: {score}/100  |  **Grade**: {grade}\n")
+              bd = s.get("breakdown", {})
+              if bd:
+                  print("| Metric | Points |")
+                  print("|--------|--------|")
+                  for k, v in bd.items():
+                      print(f"| {k.replace('_',' ')} | {'+' if v >= 0 else ''}{v} |")
+          except Exception as e:
+              print(f"Could not parse result: {e}")
+          EOF
+          python3 - <<'EOF' >> $GITHUB_STEP_SUMMARY
+          exec(open("/dev/stdin").read()) if False else None
+          EOF
+          # Simpler approach — just cat if the script above fails
+          cat results/result.json 2>/dev/null | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          s=d.get('resiliency_score') or {}
+          lines=[
+            f'## {d.get(\"experiment_title\",\"?\")}',
+            f'**Status**: \`{d.get(\"status\")}\` | **Score**: {s.get(\"score\",\"—\")}/100 | **Grade**: {s.get(\"grade\",\"—\")}',
+          ]
+          print('\n'.join(lines))
+          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kali-result-${{ github.run_id }}
+          path: results/result.json
+          if-no-files-found: ignore

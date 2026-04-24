@@ -143,6 +143,62 @@ function buildAction(b: Blockly.Block): Record<string, unknown> | null {
           blackhole_ip: str(b, 'BLACKHOLE_IP') || undefined,
         },
       };
+    case 'fault_kube_pod_delete':
+      return {
+        name: str(b, 'NAME'),
+        type: 'kubernetes/pod-delete',
+        duration: num(b, 'DURATION'),
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          label_selector: str(b, 'LABEL_SELECTOR'),
+          grace_period_seconds: num(b, 'GRACE_PERIOD'),
+        },
+      };
+    case 'fault_kube_scale_down':
+      return {
+        name: str(b, 'NAME'),
+        type: 'kubernetes/scale-down',
+        duration: num(b, 'DURATION'),
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          deployment: str(b, 'DEPLOYMENT'),
+        },
+      };
+    case 'fault_kube_node_drain':
+      return {
+        name: str(b, 'NAME'),
+        type: 'kubernetes/node-drain',
+        duration: num(b, 'DURATION'),
+        provider: {
+          node: str(b, 'NODE'),
+          ignore_daemonsets: bool(b, 'IGNORE_DS'),
+          delete_emptydir_data: bool(b, 'DELETE_DATA'),
+        },
+      };
+    case 'fault_kube_network_policy':
+      return {
+        name: str(b, 'NAME'),
+        type: 'kubernetes/network-policy',
+        duration: num(b, 'DURATION'),
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          policy_name: str(b, 'POLICY_NAME'),
+          deny_ingress: bool(b, 'DENY_INGRESS'),
+          deny_egress: bool(b, 'DENY_EGRESS'),
+        },
+      };
+    case 'fault_kube_resource_limit':
+      return {
+        name: str(b, 'NAME'),
+        type: 'kubernetes/resource-limit',
+        duration: num(b, 'DURATION'),
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          deployment: str(b, 'DEPLOYMENT'),
+          cpu_limit: str(b, 'CPU_LIMIT'),
+          memory_limit: str(b, 'MEMORY_LIMIT'),
+        },
+      };
     default:
       return null;
   }
@@ -172,6 +228,40 @@ function buildRollback(b: Blockly.Block): Record<string, unknown> | null {
         name,
         type: 'network/dns-fault',
         provider: { mode: str(b, 'MODE'), domains: csvList(str(b, 'DOMAINS')) },
+      };
+    case 'fault_kube_scale_down':
+      return {
+        name,
+        type: 'kubernetes/scale-down',
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          deployment: str(b, 'DEPLOYMENT'),
+          replicas: num(b, 'REPLICAS'),
+        },
+      };
+    case 'fault_kube_node_drain':
+      return {
+        name,
+        type: 'kubernetes/node-drain',
+        provider: { node: str(b, 'NODE') },
+      };
+    case 'fault_kube_network_policy':
+      return {
+        name,
+        type: 'kubernetes/network-policy',
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          policy_name: str(b, 'POLICY_NAME'),
+        },
+      };
+    case 'fault_kube_resource_limit':
+      return {
+        name,
+        type: 'kubernetes/resource-limit',
+        provider: {
+          namespace: str(b, 'NAMESPACE'),
+          deployment: str(b, 'DEPLOYMENT'),
+        },
       };
     default:
       return null;
