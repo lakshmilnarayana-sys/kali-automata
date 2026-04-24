@@ -138,6 +138,37 @@ def report(
     _render_probe_table("Steady State — After", result.steady_state_after)
 
 
+@app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", "--host", "-H", help="Bind address"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port"),
+    reload: bool = typer.Option(False, "--reload", help="Auto-reload on code changes"),
+) -> None:
+    """Start the KALI API server and web dashboard backend."""
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]uvicorn not installed.[/red] Run: pip install 'kali[api]'")
+        raise typer.Exit(1)
+
+    console.print(
+        Panel.fit(
+            f"[cyan]API[/cyan]  http://{host}:{port}/api\n"
+            f"[cyan]Docs[/cyan] http://{host}:{port}/docs\n"
+            f"[dim]UI   http://localhost:5173  (run npm run dev in ui/)[/dim]",
+            title="[bold]KALI API Server[/bold]",
+            border_style="cyan",
+        )
+    )
+    uvicorn.run(
+        "kali.api.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
 def _render_probe_table(title: str, probes: list) -> None:  # type: ignore[type-arg]
     if not probes:
         return

@@ -22,7 +22,7 @@ export function BlocklyWorkspace({ onAnalysis }: Props) {
 
     const ws = Blockly.inject(divRef.current, {
       toolbox: toolboxConfig,
-      theme: Blockly.Themes.Dark,
+      // Dark theme applied via CSS overrides in index.css
       grid: { spacing: 24, length: 4, colour: '#13161e', snap: true },
       zoom: { controls: true, wheel: true, startScale: 0.85, maxScale: 2, minScale: 0.3 },
       trashcan: true,

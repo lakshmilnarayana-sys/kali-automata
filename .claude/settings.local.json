@@ -19,7 +19,8 @@
       "Bash(python3 -m pip install pytest pytest-asyncio pydantic httpx pyyaml anyio)",
       "Bash(PYTHONPATH=src python3 -m pytest tests/ -x -q)",
       "Bash(PYTHONPATH=src python3 *)",
-      "WebFetch(domain:www.gremlin.com)"
+      "WebFetch(domain:www.gremlin.com)",
+      "Bash(npx tsc *)"
     ]
   }
 }

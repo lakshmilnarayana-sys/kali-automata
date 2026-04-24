@@ -2,16 +2,22 @@ import * as Blockly from 'blockly';
 
 // ─── Hue palette matching K-* module brand colours ───────────────────────────
 const HUE = {
-  experiment:     45,   // amber
-  hypothesis:    160,   // emerald
-  probe:         150,   // green
-  circuitBreaker: 200,  // slate
-  vortex:        220,   // blue   — K-Vortex
-  reaper:          0,   // red    — K-Reaper
-  gravity:       270,   // purple — K-Gravity
-  divide:        175,   // teal   — K-Divide
-  kube:          195,   // cyan   — K-Kube
+  experiment:      45,   // amber
+  hypothesis:     160,   // emerald
+  probe:          150,   // green
+  circuitBreaker: 200,   // slate
+  vortex:         220,   // blue   — K-Vortex
+  reaper:           0,   // red    — K-Reaper
+  gravity:        270,   // purple — K-Gravity
+  divide:         175,   // teal   — K-Divide
+  kube:           195,   // cyan   — K-Kube
 };
+
+// Blockly's FieldDropdown type is Field<string> but appendField expects Field<string|undefined>.
+// The variance mismatch is a known Blockly typings quirk — cast via unknown to suppress it.
+function dd(options: [string, string][], name?: string): Blockly.Field {
+  return new Blockly.FieldDropdown(options) as unknown as Blockly.Field;
+}
 
 export function registerBlocks(): void {
 
@@ -19,8 +25,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['kali_experiment'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.experiment);
-      this.appendDummyInput()
-        .appendField('⚡  KALI EXPERIMENT');
+      this.appendDummyInput().appendField('⚡  KALI EXPERIMENT');
       this.appendDummyInput()
         .appendField('   Title')
         .appendField(new Blockly.FieldTextInput('My Chaos Experiment'), 'TITLE');
@@ -34,15 +39,9 @@ export function registerBlocks(): void {
         .appendField('   Blast Radius  ')
         .appendField(new Blockly.FieldNumber(50, 0, 99, 1), 'BLAST_RADIUS')
         .appendField('%  (max 99 — 100% is blocked)');
-      this.appendStatementInput('HYPOTHESIS')
-        .setCheck('Hypothesis')
-        .appendField('🎯  Steady State');
-      this.appendStatementInput('METHOD')
-        .setCheck('Fault')
-        .appendField('⚙️  Method');
-      this.appendStatementInput('CIRCUIT_BREAKER')
-        .setCheck('CircuitBreaker')
-        .appendField('🔒  Circuit Breaker');
+      this.appendStatementInput('HYPOTHESIS').setCheck('Hypothesis').appendField('🎯  Steady State');
+      this.appendStatementInput('METHOD').setCheck('Fault').appendField('⚙️  Method');
+      this.appendStatementInput('CIRCUIT_BREAKER').setCheck('CircuitBreaker').appendField('🔒  Circuit Breaker');
       this.setDeletable(false);
       this.setTooltip('Root experiment block. Blast Radius 100% is blocked by the safety engine.');
     },
@@ -52,14 +51,11 @@ export function registerBlocks(): void {
   Blockly.Blocks['kali_hypothesis'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.hypothesis);
-      this.appendDummyInput()
-        .appendField('🎯  STEADY STATE HYPOTHESIS');
+      this.appendDummyInput().appendField('🎯  STEADY STATE HYPOTHESIS');
       this.appendDummyInput()
         .appendField('   Title')
         .appendField(new Blockly.FieldTextInput('System is healthy'), 'TITLE');
-      this.appendStatementInput('PROBES')
-        .setCheck('Probe')
-        .appendField('   Probes');
+      this.appendStatementInput('PROBES').setCheck('Probe').appendField('   Probes');
       this.setPreviousStatement(true, 'Hypothesis');
       this.setNextStatement(false);
       this.setTooltip('Defines what "healthy" looks like. Checked before and after the experiment.');
@@ -70,8 +66,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['kali_circuit_breaker'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.circuitBreaker);
-      this.appendDummyInput()
-        .appendField('🔒  CIRCUIT BREAKER');
+      this.appendDummyInput().appendField('🔒  CIRCUIT BREAKER');
       this.appendDummyInput()
         .appendField('   Enabled')
         .appendField(new Blockly.FieldCheckbox('TRUE'), 'ENABLED');
@@ -93,8 +88,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['probe_http'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.probe);
-      this.appendDummyInput()
-        .appendField('🌐  HTTP PROBE');
+      this.appendDummyInput().appendField('🌐  HTTP PROBE');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('health-check'), 'NAME');
@@ -103,7 +97,7 @@ export function registerBlocks(): void {
         .appendField(new Blockly.FieldTextInput('http://localhost:8080/health'), 'URL');
       this.appendDummyInput()
         .appendField('   Method')
-        .appendField(new Blockly.FieldDropdown([['GET','GET'],['POST','POST'],['PUT','PUT'],['HEAD','HEAD']]), 'METHOD')
+        .appendField(dd([['GET','GET'],['POST','POST'],['PUT','PUT'],['HEAD','HEAD']]), 'METHOD')
         .appendField('   Expected status')
         .appendField(new Blockly.FieldNumber(200, 100, 599, 1), 'EXPECTED_STATUS');
       this.appendDummyInput()
@@ -119,8 +113,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['probe_process'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.probe);
-      this.appendDummyInput()
-        .appendField('⚙️  PROCESS PROBE');
+      this.appendDummyInput().appendField('⚙️  PROCESS PROBE');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('process-check'), 'NAME');
@@ -136,8 +129,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['probe_metric'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.probe);
-      this.appendDummyInput()
-        .appendField('📊  METRIC PROBE');
+      this.appendDummyInput().appendField('📊  METRIC PROBE');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('error-rate'), 'NAME');
@@ -149,7 +141,7 @@ export function registerBlocks(): void {
         .appendField(new Blockly.FieldTextInput('http_error_rate'), 'METRIC');
       this.appendDummyInput()
         .appendField('   Operator')
-        .appendField(new Blockly.FieldDropdown([['<','<'],['<=','<='],['>=','>='],['==','=='],['!=','!=']]), 'OPERATOR')
+        .appendField(dd([['<','<'],['<=','<='],['>=','>='],['==','=='],['!=','!=']]), 'OPERATOR')
         .appendField('   Threshold')
         .appendField(new Blockly.FieldNumber(0.01, 0), 'THRESHOLD');
       this.setPreviousStatement(true, 'Probe');
@@ -163,8 +155,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_network_latency'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.vortex);
-      this.appendDummyInput()
-        .appendField('🌊  K-VORTEX · Network Latency');
+      this.appendDummyInput().appendField('🌊  K-VORTEX · Network Latency');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('inject-latency'), 'NAME');
@@ -192,8 +183,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_network_loss'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.vortex);
-      this.appendDummyInput()
-        .appendField('🌊  K-VORTEX · Packet Loss');
+      this.appendDummyInput().appendField('🌊  K-VORTEX · Packet Loss');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('inject-packet-loss'), 'NAME');
@@ -221,8 +211,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_process_kill'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.reaper);
-      this.appendDummyInput()
-        .appendField('💀  K-REAPER · Kill Process');
+      this.appendDummyInput().appendField('💀  K-REAPER · Kill Process');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('kill-service'), 'NAME');
@@ -231,9 +220,7 @@ export function registerBlocks(): void {
         .appendField(new Blockly.FieldTextInput('myapp'), 'PROCESS');
       this.appendDummyInput()
         .appendField('   Signal')
-        .appendField(new Blockly.FieldDropdown([
-          ['SIGTERM','SIGTERM'],['SIGKILL','SIGKILL'],['SIGHUP','SIGHUP'],['SIGSTOP','SIGSTOP'],
-        ]), 'SIGNAL');
+        .appendField(dd([['SIGTERM','SIGTERM'],['SIGKILL','SIGKILL'],['SIGHUP','SIGHUP'],['SIGSTOP','SIGSTOP']]), 'SIGNAL');
       this.appendDummyInput()
         .appendField('   Restart command (rollback)')
         .appendField(new Blockly.FieldTextInput(''), 'RESTART_CMD');
@@ -252,8 +239,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_cpu_stress'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.gravity);
-      this.appendDummyInput()
-        .appendField('🏋  K-GRAVITY · CPU Stress');
+      this.appendDummyInput().appendField('🏋  K-GRAVITY · CPU Stress');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('cpu-stress'), 'NAME');
@@ -276,8 +262,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_memory_stress'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.gravity);
-      this.appendDummyInput()
-        .appendField('🏋  K-GRAVITY · Memory Stress');
+      this.appendDummyInput().appendField('🏋  K-GRAVITY · Memory Stress');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('memory-stress'), 'NAME');
@@ -302,8 +287,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_network_partition'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.divide);
-      this.appendDummyInput()
-        .appendField('✂️  K-DIVIDE · Network Partition');
+      this.appendDummyInput().appendField('✂️  K-DIVIDE · Network Partition');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('partition-downstream'), 'NAME');
@@ -312,7 +296,7 @@ export function registerBlocks(): void {
         .appendField(new Blockly.FieldTextInput('10.0.0.50, 10.0.0.51'), 'TARGETS');
       this.appendDummyInput()
         .appendField('   Direction')
-        .appendField(new Blockly.FieldDropdown([['Both','both'],['Inbound','inbound'],['Outbound','outbound']]), 'DIRECTION');
+        .appendField(dd([['Both','both'],['Inbound','inbound'],['Outbound','outbound']]), 'DIRECTION');
       this.appendDummyInput()
         .appendField('   Duration')
         .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
@@ -329,14 +313,13 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_dns_fault'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.divide);
-      this.appendDummyInput()
-        .appendField('✂️  K-DIVIDE · DNS Fault');
+      this.appendDummyInput().appendField('✂️  K-DIVIDE · DNS Fault');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('dns-fault'), 'NAME');
       this.appendDummyInput()
         .appendField('   Mode')
-        .appendField(new Blockly.FieldDropdown([['Poison /etc/hosts','poison'],['Block port 53','block']]), 'MODE');
+        .appendField(dd([['Poison /etc/hosts','poison'],['Block port 53','block']]), 'MODE');
       this.appendDummyInput()
         .appendField('   Domains (comma-separated)')
         .appendField(new Blockly.FieldTextInput('payments.example.com'), 'DOMAINS');
@@ -361,8 +344,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_kube_pod_delete'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.kube);
-      this.appendDummyInput()
-        .appendField('☸️  K-KUBE · Pod Delete');
+      this.appendDummyInput().appendField('☸️  K-KUBE · Pod Delete');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('delete-pods'), 'NAME');
@@ -375,9 +357,7 @@ export function registerBlocks(): void {
       this.appendDummyInput()
         .appendField('   Grace period')
         .appendField(new Blockly.FieldNumber(0, 0), 'GRACE_PERIOD')
-        .appendField('seconds');
-      this.appendDummyInput()
-        .appendField('   Duration')
+        .appendField('seconds   Duration')
         .appendField(new Blockly.FieldNumber(30, 1), 'DURATION')
         .appendField('seconds');
       this.setPreviousStatement(true, 'Fault');
@@ -389,22 +369,19 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_kube_scale_down'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.kube);
-      this.appendDummyInput()
-        .appendField('☸️  K-KUBE · Scale to Zero');
+      this.appendDummyInput().appendField('☸️  K-KUBE · Scale to Zero');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('scale-down'), 'NAME');
       this.appendDummyInput()
         .appendField('   Namespace')
-        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
-      this.appendDummyInput()
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE')
         .appendField('   Deployment')
         .appendField(new Blockly.FieldTextInput('my-service'), 'DEPLOYMENT');
       this.appendDummyInput()
-        .appendField('   Restore to replicas (rollback)')
-        .appendField(new Blockly.FieldNumber(3, 1, 100, 1), 'REPLICAS');
-      this.appendDummyInput()
-        .appendField('   Duration')
+        .appendField('   Restore to')
+        .appendField(new Blockly.FieldNumber(3, 1, 100, 1), 'REPLICAS')
+        .appendField('replicas (rollback)   Duration')
         .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
         .appendField('seconds');
       this.appendDummyInput()
@@ -419,8 +396,7 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_kube_node_drain'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.kube);
-      this.appendDummyInput()
-        .appendField('☸️  K-KUBE · Node Drain');
+      this.appendDummyInput().appendField('☸️  K-KUBE · Node Drain');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('drain-node'), 'NAME');
@@ -435,9 +411,7 @@ export function registerBlocks(): void {
       this.appendDummyInput()
         .appendField('   Duration')
         .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
-        .appendField('seconds');
-      this.appendDummyInput()
-        .appendField('   Auto-rollback (uncordon)')
+        .appendField('seconds   Auto-rollback (uncordon)')
         .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
       this.setPreviousStatement(true, 'Fault');
       this.setNextStatement(true, 'Fault');
@@ -448,15 +422,13 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_kube_network_policy'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.kube);
-      this.appendDummyInput()
-        .appendField('☸️  K-KUBE · Network Policy');
+      this.appendDummyInput().appendField('☸️  K-KUBE · Network Policy');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('isolate-pods'), 'NAME');
       this.appendDummyInput()
         .appendField('   Namespace')
-        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
-      this.appendDummyInput()
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE')
         .appendField('   Policy name')
         .appendField(new Blockly.FieldTextInput('kali-deny-policy'), 'POLICY_NAME');
       this.appendDummyInput()
@@ -467,9 +439,7 @@ export function registerBlocks(): void {
       this.appendDummyInput()
         .appendField('   Duration')
         .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
-        .appendField('seconds');
-      this.appendDummyInput()
-        .appendField('   Auto-rollback (delete policy)')
+        .appendField('seconds   Auto-rollback')
         .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
       this.setPreviousStatement(true, 'Fault');
       this.setNextStatement(true, 'Fault');
@@ -480,15 +450,13 @@ export function registerBlocks(): void {
   Blockly.Blocks['fault_kube_resource_limit'] = {
     init(this: Blockly.Block) {
       this.setColour(HUE.kube);
-      this.appendDummyInput()
-        .appendField('☸️  K-KUBE · Resource Limits');
+      this.appendDummyInput().appendField('☸️  K-KUBE · Resource Limits');
       this.appendDummyInput()
         .appendField('   Name')
         .appendField(new Blockly.FieldTextInput('throttle-resources'), 'NAME');
       this.appendDummyInput()
         .appendField('   Namespace')
-        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE');
-      this.appendDummyInput()
+        .appendField(new Blockly.FieldTextInput('default'), 'NAMESPACE')
         .appendField('   Deployment')
         .appendField(new Blockly.FieldTextInput('my-service'), 'DEPLOYMENT');
       this.appendDummyInput()
@@ -499,9 +467,7 @@ export function registerBlocks(): void {
       this.appendDummyInput()
         .appendField('   Duration')
         .appendField(new Blockly.FieldNumber(60, 1), 'DURATION')
-        .appendField('seconds');
-      this.appendDummyInput()
-        .appendField('   Auto-rollback (remove limits)')
+        .appendField('seconds   Auto-rollback')
         .appendField(new Blockly.FieldCheckbox('TRUE'), 'ADD_ROLLBACK');
       this.setPreviousStatement(true, 'Fault');
       this.setNextStatement(true, 'Fault');
@@ -516,9 +482,7 @@ export const toolboxConfig = {
   kind: 'categoryToolbox',
   contents: [
     {
-      kind: 'category',
-      name: '📋  Setup',
-      colour: `${HUE.experiment}`,
+      kind: 'category', name: '📋  Setup', colour: `${HUE.experiment}`,
       contents: [
         { kind: 'block', type: 'kali_experiment' },
         { kind: 'block', type: 'kali_hypothesis' },
@@ -526,9 +490,7 @@ export const toolboxConfig = {
       ],
     },
     {
-      kind: 'category',
-      name: '🔍  Probes',
-      colour: `${HUE.probe}`,
+      kind: 'category', name: '🔍  Probes', colour: `${HUE.probe}`,
       contents: [
         { kind: 'block', type: 'probe_http' },
         { kind: 'block', type: 'probe_process' },
@@ -536,44 +498,32 @@ export const toolboxConfig = {
       ],
     },
     {
-      kind: 'category',
-      name: '🌊  K-Vortex · Network',
-      colour: `${HUE.vortex}`,
+      kind: 'category', name: '🌊  K-Vortex · Network', colour: `${HUE.vortex}`,
       contents: [
         { kind: 'block', type: 'fault_network_latency' },
         { kind: 'block', type: 'fault_network_loss' },
       ],
     },
     {
-      kind: 'category',
-      name: '💀  K-Reaper · Process',
-      colour: `${HUE.reaper}`,
-      contents: [
-        { kind: 'block', type: 'fault_process_kill' },
-      ],
+      kind: 'category', name: '💀  K-Reaper · Process', colour: `${HUE.reaper}`,
+      contents: [{ kind: 'block', type: 'fault_process_kill' }],
     },
     {
-      kind: 'category',
-      name: '🏋  K-Gravity · Resources',
-      colour: `${HUE.gravity}`,
+      kind: 'category', name: '🏋  K-Gravity · Resources', colour: `${HUE.gravity}`,
       contents: [
         { kind: 'block', type: 'fault_cpu_stress' },
         { kind: 'block', type: 'fault_memory_stress' },
       ],
     },
     {
-      kind: 'category',
-      name: '✂️  K-Divide · Partition',
-      colour: `${HUE.divide}`,
+      kind: 'category', name: '✂️  K-Divide · Partition', colour: `${HUE.divide}`,
       contents: [
         { kind: 'block', type: 'fault_network_partition' },
         { kind: 'block', type: 'fault_dns_fault' },
       ],
     },
     {
-      kind: 'category',
-      name: '☸️  K-Kube · Kubernetes',
-      colour: `${HUE.kube}`,
+      kind: 'category', name: '☸️  K-Kube · Kubernetes', colour: `${HUE.kube}`,
       contents: [
         { kind: 'block', type: 'fault_kube_pod_delete' },
         { kind: 'block', type: 'fault_kube_scale_down' },
